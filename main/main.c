@@ -51,6 +51,7 @@ static void mpu6050_read_raw(int16_t accel[3], int16_t gyro[3], int16_t *temp) {
 
 void mpu6050_task(void *p) {
     // Inicialização I2C
+    
     i2c_init(i2c_default, 400 * 1000);
     gpio_set_function(I2C_SDA_GPIO, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL_GPIO, GPIO_FUNC_I2C);
@@ -58,13 +59,13 @@ void mpu6050_task(void *p) {
     gpio_pull_up(I2C_SCL_GPIO);
     mpu6050_reset();
 
-    // Inicialização UART
     uart_init(UART_ID, UART_BAUDRATE);
     gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
 
     int16_t accel[3], gyro[3], temp;
     FusionAhrs ahrs;
+
     FusionAhrsInitialise(&ahrs);
 
     char outbuf[64];
@@ -87,7 +88,6 @@ void mpu6050_task(void *p) {
         FusionAhrsUpdateNoMagnetometer(&ahrs, gyroscope, accelerometer, SAMPLE_PERIOD);
         FusionEuler euler = FusionQuaternionToEuler(FusionAhrsGetQuaternion(&ahrs));
 
-        // Formato CSV: roll,pitch,yaw,click\n
         int click = (accelerometer.axis.y > 1.0f) ? 1 : 0;
 
         int len = snprintf(outbuf, sizeof(outbuf), "%.2f,%.2f,%.2f,%d\n",
